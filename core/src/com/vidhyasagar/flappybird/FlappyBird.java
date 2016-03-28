@@ -23,10 +23,13 @@ public class FlappyBird extends ApplicationAdapter {
 	int scoringTube;
 	BitmapFont font;
 
+	Texture gameOver;
+
 	Texture[] birds;
 	float birdY = 0; //Use this to manipulate bird going up and down
 	Boolean flapState = false;
 	Boolean isGameActive = false;
+	Boolean isCrashed = false;
 	float velocity = 0;
 	float gravity = 2;
 	Circle birdCircle;
@@ -56,12 +59,13 @@ public class FlappyBird extends ApplicationAdapter {
 		font.getData().setScale(10);
 //		shapeRenderer = new ShapeRenderer();
 
+		gameOver = new Texture("gameover.png");
+
 		//BIRDS
 		birdCircle = new Circle();
 		birds = new Texture[2];
 		birds[0] = new Texture("bird.png");
 		birds[1] = new Texture("bird2.png");
-		birdY = Gdx.graphics.getHeight() / 2 - birds[1].getWidth() / 2;
 
 
 
@@ -75,12 +79,7 @@ public class FlappyBird extends ApplicationAdapter {
 		randomGenerator = new Random();
 		distanceBetweenTubes = Gdx.graphics.getWidth() * 2/3;
 
-		for(int i = 0; i < numberOfTubes; i++) {
-			tubeOffset[i] = (randomGenerator.nextFloat() - 0.5f) * (Gdx.graphics.getHeight() - gap - 100);
-			tubeX[i] = Gdx.graphics.getWidth()/2 - topTube.getWidth()/2 + (i *distanceBetweenTubes) + Gdx.graphics.getWidth();
-			topRectangles[i] = new Rectangle();
-			bottomRectangles[i] = new Rectangle();
-		}
+		startGame();
 	}
 
 	@Override
@@ -89,7 +88,7 @@ public class FlappyBird extends ApplicationAdapter {
 		batch.begin();
 		batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-		if(isGameActive) {
+		if(isGameActive && !isCrashed) {
 
 			if(birdCircle.x > tubeX[scoringTube]) {
 				gameScore++;
@@ -125,18 +124,39 @@ public class FlappyBird extends ApplicationAdapter {
 			}
 
 
-			if(birdY >0 || velocity < 0) {
+			if(birdY > 0) {
 				velocity = velocity + gravity;
 				birdY -= velocity;
 			}
+			else {
+				isCrashed = true;
+			}
 
 		}
-		else {
+		else if(!isGameActive && !isCrashed){
 			if(Gdx.input.justTouched()) {
 				isGameActive = true;
 			}
 
 		}
+
+
+		//if statement ends here
+		//Code for if crash occurs
+		if(isCrashed) {
+			batch.draw(gameOver, Gdx.graphics.getWidth()/2 - gameOver.getWidth()/2, Gdx.graphics.getHeight()/2 - gameOver.getHeight()/2);
+			if(Gdx.input.justTouched()) {
+				isGameActive = true;
+				isCrashed = false;
+				gameScore = 0;
+				scoringTube = 0;
+				velocity = 0;
+				startGame();
+
+			}
+		}
+
+
 
 
 		if(flapState) {
@@ -165,11 +185,25 @@ public class FlappyBird extends ApplicationAdapter {
 
 			//CHECK FOR COLLISION
 			if(Intersector.overlaps(birdCircle, topRectangles[i]) || Intersector.overlaps(birdCircle, bottomRectangles[i])) {
-				Gdx.app.log("Collision", "Yes");
+				//GAME OVER AFTER COLLISION
+				isCrashed = true;
 			}
 
 		}
 
 //		shapeRenderer.end();
+	}
+
+	public void startGame() {
+
+		birdY = Gdx.graphics.getHeight() / 2 - birds[1].getWidth() / 2;
+
+
+		for(int i = 0; i < numberOfTubes; i++) {
+			tubeOffset[i] = (randomGenerator.nextFloat() - 0.5f) * (Gdx.graphics.getHeight() - gap - 100);
+			tubeX[i] = Gdx.graphics.getWidth()/2 - topTube.getWidth()/2 + (i *distanceBetweenTubes) + Gdx.graphics.getWidth();
+			topRectangles[i] = new Rectangle();
+			bottomRectangles[i] = new Rectangle();
+		}
 	}
 }
